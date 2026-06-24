@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Review Reels</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0a0a0a;
+      color: #fff;
+      overflow: hidden;
+      height: 100dvh;
+      width: 100vw;
+    }
+
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100dvh;
+      font-size: 18px;
+      color: #888;
+    }
+
+    .empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100dvh;
+      font-size: 20px;
+      color: #888;
+      text-align: center;
+      padding: 40px;
+    }
+    .empty span { font-size: 48px; margin-bottom: 16px; }
+
+    /* Header */
+    .header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      padding: 16px 20px 12px;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .header h1 {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+    .counter {
+      font-size: 14px;
+      color: #888;
+      font-weight: 500;
+    }
+
+    /* Carousel */
+    .carousel {
+      height: 100dvh;
+      overflow-y: scroll;
+      scroll-snap-type: y mandatory;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .card {
+      height: 100dvh;
+      scroll-snap-align: start;
+      scroll-snap-stop: always;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    /* Reel area */
+    .reel-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 12px 0;
+      gap: 8px;
+      min-height: 0;
+    }
+
+    .reel-wrapper {
+      width: 100%;
+      max-width: 400px;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #1a1a1a;
+      position: relative;
+    }
+
+    .reel-wrapper iframe {
+      width: 100%;
+      border: none;
+      display: block;
+    }
+
+    .reel-label {
+      font-size: 11px;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 600;
+      text-align: center;
+    }
+
+    .no-reel {
+      width: 100%;
+      max-width: 400px;
+      height: 200px;
+      border-radius: 12px;
+      background: #1a1a1a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #444;
+      font-size: 14px;
+    }
+
+    /* Bottom bar */
+    .bottom-bar {
+      padding: 12px 20px 28px;
+      background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0) 100%);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .artist-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .artist-info .handle {
+      font-size: 16px;
+      font-weight: 700;
+    }
+    .artist-info .details {
+      font-size: 13px;
+      color: #888;
+    }
+
+    .approve-btn {
+      width: 100%;
+      padding: 16px;
+      border-radius: 14px;
+      border: none;
+      font-size: 17px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      letter-spacing: -0.2px;
+    }
+
+    .approve-btn.unapproved {
+      background: #fff;
+      color: #000;
+    }
+    .approve-btn.unapproved:active {
+      background: #ddd;
+      transform: scale(0.97);
+    }
+
+    .approve-btn.approved {
+      background: #22c55e;
+      color: #fff;
+    }
+    .approve-btn.approved:active {
+      transform: scale(0.97);
+    }
+
+    .approve-btn:disabled {
+      opacity: 0.5;
+    }
+
+    /* Dots indicator */
+    .dots {
+      position: fixed;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      z-index: 100;
+    }
+    .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.25);
+      transition: all 0.2s;
+    }
+    .dot.active {
+      background: #fff;
+      transform: scale(1.4);
+    }
+    .dot.is-approved {
+      background: rgba(34,197,94,0.5);
+    }
+    .dot.active.is-approved {
+      background: #22c55e;
+      transform: scale(1.4);
+    }
+
+    /* Two-reel layout */
+    .two-reels .reel-wrapper iframe {
+      height: 280px;
+    }
+    .one-reel .reel-wrapper iframe {
+      height: 500px;
+    }
+
+    @media (max-height: 700px) {
+      .two-reels .reel-wrapper iframe { height: 220px; }
+      .one-reel .reel-wrapper iframe { height: 380px; }
+    }
+
+    @media (min-height: 900px) {
+      .two-reels .reel-wrapper iframe { height: 340px; }
+      .one-reel .reel-wrapper iframe { height: 600px; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="app">
+  <div class="loading">Loading posts...</div>
+</div>
+
+<script>
+  let posts = [];
+  let currentIndex = 0;
+
+  function extractEmbedUrl(url) {
+    if (!url) return null;
+    try {
+      const u = new URL(url);
+      const path = u.pathname.replace(/\/$/, '');
+      return `https://www.instagram.com${path}/embed/`;
+    } catch {
+      return null;
+    }
+  }
+
+  async function loadPosts() {
+    try {
+      const res = await fetch('/api/posts');
+      posts = await res.json();
+      render();
+    } catch (err) {
+      document.getElementById('app').innerHTML =
+        `<div class="loading">Error loading posts: ${err.message}</div>`;
+    }
+  }
+
+  function render() {
+    if (posts.length === 0) {
+      document.getElementById('app').innerHTML =
+        '<div class="empty"><span>&#10024;</span>No posts to review right now</div>';
+      return;
+    }
+
+    const dotsHtml = posts.map((p, i) =>
+      `<div class="dot ${i === 0 ? 'active' : ''} ${p.approved ? 'is-approved' : ''}" data-i="${i}"></div>`
+    ).join('');
+
+    const cardsHtml = posts.map((p, i) => {
+      const embed1 = extractEmbedUrl(p.postLink1);
+      const embed2 = extractEmbedUrl(p.postLink2);
+      const reelCount = (embed1 ? 1 : 0) + (embed2 ? 1 : 0);
+      const layoutClass = reelCount >= 2 ? 'two-reels' : 'one-reel';
+
+      let reelsHtml = '';
+      if (embed1) {
+        reelsHtml += `
+          ${reelCount >= 2 ? '<div class="reel-label">Reel 1</div>' : ''}
+          <div class="reel-wrapper">
+            <iframe src="${embed1}" loading="lazy" allowfullscreen></iframe>
+          </div>`;
+      }
+      if (embed2) {
+        reelsHtml += `
+          <div class="reel-label">Reel 2</div>
+          <div class="reel-wrapper">
+            <iframe src="${embed2}" loading="lazy" allowfullscreen></iframe>
+          </div>`;
+      }
+      if (!embed1 && !embed2) {
+        reelsHtml = '<div class="no-reel">No reel links</div>';
+      }
+
+      const details = [p.artistName, p.songName].filter(Boolean).join(' — ');
+
+      return `
+        <div class="card ${layoutClass}" data-index="${i}">
+          <div class="reel-container">${reelsHtml}</div>
+          <div class="bottom-bar">
+            <div class="artist-info">
+              <div class="handle">@${p.instagram}</div>
+              ${details ? `<div class="details">${details}</div>` : ''}
+            </div>
+            <button
+              class="approve-btn ${p.approved ? 'approved' : 'unapproved'}"
+              onclick="toggleApprove(${i})"
+              data-btn="${i}"
+            >
+              ${p.approved ? 'Approved ✓' : 'Approve'}
+            </button>
+          </div>
+        </div>`;
+    }).join('');
+
+    document.getElementById('app').innerHTML = `
+      <div class="header">
+        <h1>Review Reels</h1>
+        <div class="counter"><span id="current-num">1</span> / ${posts.length}</div>
+      </div>
+      <div class="dots">${dotsHtml}</div>
+      <div class="carousel" id="carousel">${cardsHtml}</div>
+    `;
+
+    const carousel = document.getElementById('carousel');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          currentIndex = parseInt(entry.target.dataset.index);
+          document.getElementById('current-num').textContent = currentIndex + 1;
+          document.querySelectorAll('.dot').forEach((d, di) => {
+            d.classList.toggle('active', di === currentIndex);
+          });
+        }
+      });
+    }, { root: carousel, threshold: 0.6 });
+
+    document.querySelectorAll('.card').forEach((card) => observer.observe(card));
+  }
+
+  async function toggleApprove(index) {
+    const post = posts[index];
+    const newVal = !post.approved;
+    const btn = document.querySelector(`[data-btn="${index}"]`);
+    const dot = document.querySelectorAll('.dot')[index];
+
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+
+    try {
+      const res = await fetch(`/api/approve/${post.id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ approved: newVal }),
+      });
+
+      if (!res.ok) throw new Error('Failed');
+
+      post.approved = newVal;
+      btn.className = `approve-btn ${newVal ? 'approved' : 'unapproved'}`;
+      btn.textContent = newVal ? 'Approved ✓' : 'Approve';
+      dot.classList.toggle('is-approved', newVal);
+    } catch (err) {
+      btn.textContent = 'Error — tap to retry';
+    }
+
+    btn.disabled = false;
+  }
+
+  loadPosts();
+</script>
+
+</body>
+</html>

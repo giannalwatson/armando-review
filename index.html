@@ -126,19 +126,30 @@
       font-size: 14px;
     }
 
-    .reel-fallback {
+    .video-loading {
       width: 100%;
       max-width: 400px;
-      padding: 20px;
+      height: 300px;
       border-radius: 12px;
       background: #1a1a1a;
-      text-align: center;
-    }
-    .reel-fallback a {
-      color: #3b82f6;
-      text-decoration: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #666;
       font-size: 14px;
     }
+
+    .video-loading .spinner {
+      width: 24px;
+      height: 24px;
+      border: 2px solid #333;
+      border-top-color: #888;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-right: 10px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
 
     .bottom-bar {
       padding: 12px 20px 28px;
@@ -251,6 +262,8 @@
 <script>
   let posts = [];
   let currentIndex = 0;
+  const videoUrlCache = {};
+  const loadingVideos = {};
 
   async function loadPosts() {
     try {
@@ -263,29 +276,50 @@
     }
   }
 
-  function buildReelHtml(videoUrl, postLink, label) {
-    if (videoUrl) {
-      return `
-        ${label ? `<div class="reel-label">${label}</div>` : ''}
-        <div class="reel-wrapper">
-          <video
-            src="${videoUrl}"
-            playsinline
-            webkit-playsinline
-            loop
-            muted
-            preload="metadata"
-          ></video>
-        </div>`;
+  async function fetchVideoUrl(igUrl, containerId) {
+    if (!igUrl || loadingVideos[igUrl]) return;
+    if (videoUrlCache[igUrl]) {
+      insertVideo(containerId, videoUrlCache[igUrl]);
+      return;
     }
-    if (postLink) {
-      return `
-        ${label ? `<div class="reel-label">${label}</div>` : ''}
-        <div class="reel-fallback">
-          <a href="${postLink}" target="_blank">Open reel on Instagram</a>
-        </div>`;
+    loadingVideos[igUrl] = true;
+    try {
+      const res = await fetch(`/api/video?url=${encodeURIComponent(igUrl)}`);
+      const data = await res.json();
+      if (data.videoUrl) {
+        videoUrlCache[igUrl] = data.videoUrl;
+        insertVideo(containerId, data.videoUrl);
+      } else {
+        const el = document.getElementById(containerId);
+        if (el) el.innerHTML = `<a href="${igUrl}" target="_blank" style="color:#3b82f6;font-size:14px;">Open on Instagram</a>`;
+      }
+    } catch {
+      const el = document.getElementById(containerId);
+      if (el) el.innerHTML = `<a href="${igUrl}" target="_blank" style="color:#3b82f6;font-size:14px;">Open on Instagram</a>`;
     }
-    return '';
+    loadingVideos[igUrl] = false;
+  }
+
+  function insertVideo(containerId, videoUrl) {
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    const wrapper = el.closest('.reel-wrapper') || el.parentElement;
+    const video = document.createElement('video');
+    video.src = videoUrl;
+    video.setAttribute('playsinline', '');
+    video.setAttribute('webkit-playsinline', '');
+    video.loop = true;
+    video.muted = true;
+    video.preload = 'metadata';
+    video.style.cssText = 'width:100%;display:block;object-fit:cover;border-radius:12px;';
+    video.addEventListener('click', () => { video.muted = !video.muted; });
+
+    el.replaceWith(video);
+
+    const card = video.closest('.card');
+    if (card && parseInt(card.dataset.index) === currentIndex) {
+      video.play().catch(() => {});
+    }
   }
 
   function render() {
@@ -300,15 +334,29 @@
     ).join('');
 
     const cardsHtml = posts.map((p, i) => {
-      const has1 = p.videoUrl1 || p.postLink1;
-      const has2 = p.videoUrl2 || p.postLink2;
+      const has1 = !!p.postLink1;
+      const has2 = !!p.postLink2;
       const reelCount = (has1 ? 1 : 0) + (has2 ? 1 : 0);
       const layoutClass = reelCount >= 2 ? 'two-reels' : 'one-reel';
 
       let reelsHtml = '';
-      if (has1) reelsHtml += buildReelHtml(p.videoUrl1, p.postLink1, reelCount >= 2 ? 'Reel 1' : null);
-      if (has2) reelsHtml += buildReelHtml(p.videoUrl2, p.postLink2, 'Reel 2');
-      if (!has1 && !has2) reelsHtml = '<div class="no-reel">No reel links</div>';
+      if (has1) {
+        reelsHtml += `
+          ${reelCount >= 2 ? '<div class="reel-label">Reel 1</div>' : ''}
+          <div class="reel-wrapper">
+            <div class="video-loading" id="video-${i}-1"><div class="spinner"></div>Loading video...</div>
+          </div>`;
+      }
+      if (has2) {
+        reelsHtml += `
+          <div class="reel-label">Reel 2</div>
+          <div class="reel-wrapper">
+            <div class="video-loading" id="video-${i}-2"><div class="spinner"></div>Loading video...</div>
+          </div>`;
+      }
+      if (!has1 && !has2) {
+        reelsHtml = '<div class="no-reel">No reel links</div>';
+      }
 
       const details = [p.artistName, p.songName].filter(Boolean).join(' — ');
 
@@ -344,19 +392,32 @@
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         const idx = parseInt(entry.target.dataset.index);
-        const videos = entry.target.querySelectorAll('video');
         if (entry.isIntersecting) {
           currentIndex = idx;
           document.getElementById('current-num').textContent = idx + 1;
           document.querySelectorAll('.dot').forEach((d, di) => {
             d.classList.toggle('active', di === idx);
           });
-          videos.forEach(v => {
+
+          const p = posts[idx];
+          if (p.postLink1) fetchVideoUrl(p.postLink1, `video-${idx}-1`);
+          if (p.postLink2) fetchVideoUrl(p.postLink2, `video-${idx}-2`);
+
+          // Pre-fetch next 2
+          for (let n = 1; n <= 2; n++) {
+            const next = posts[idx + n];
+            if (next) {
+              if (next.postLink1) fetchVideoUrl(next.postLink1, `video-${idx + n}-1`);
+              if (next.postLink2) fetchVideoUrl(next.postLink2, `video-${idx + n}-2`);
+            }
+          }
+
+          entry.target.querySelectorAll('video').forEach(v => {
             v.muted = true;
             v.play().catch(() => {});
           });
         } else {
-          videos.forEach(v => {
+          entry.target.querySelectorAll('video').forEach(v => {
             v.pause();
             v.currentTime = 0;
           });
@@ -365,13 +426,6 @@
     }, { root: carousel, threshold: 0.6 });
 
     document.querySelectorAll('.card').forEach((card) => observer.observe(card));
-
-    // Tap video to unmute/mute
-    document.querySelectorAll('video').forEach(v => {
-      v.addEventListener('click', () => {
-        v.muted = !v.muted;
-      });
-    });
   }
 
   async function toggleApprove(index) {

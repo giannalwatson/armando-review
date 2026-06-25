@@ -89,12 +89,19 @@ def get_posts():
             "songName": song,
             "postLink1": link1,
             "postLink2": link2,
-            "videoUrl1": extract_video_url(link1),
-            "videoUrl2": extract_video_url(link2),
             "approved": props.get("Approve", {}).get("checkbox", False),
         })
 
     return jsonify(posts)
+
+
+@app.route("/api/video")
+def get_video():
+    ig_url = request.args.get("url")
+    if not ig_url:
+        return jsonify({"error": "Missing url param"}), 400
+    video_url = extract_video_url(ig_url)
+    return jsonify({"videoUrl": video_url})
 
 
 @app.route("/api/approve/<page_id>", methods=["POST"])

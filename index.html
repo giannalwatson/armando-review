@@ -56,10 +56,39 @@
       height: 100%; justify-content: center;
     }
 
+    .reel-col .video-wrap {
+      position: relative; width: 100%; border-radius: 10px; overflow: hidden;
+      background: #1a1a1a;
+    }
+
     .reel-col video {
-      width: 100%; border-radius: 10px; background: #1a1a1a;
+      width: 100%; display: block; background: #1a1a1a;
       object-fit: contain;
     }
+
+    .video-controls {
+      position: absolute; bottom: 8px; right: 8px;
+      display: flex; gap: 6px; z-index: 10;
+    }
+    .vid-btn {
+      width: 36px; height: 36px; border-radius: 50%; border: none;
+      background: rgba(0,0,0,0.6); color: #fff; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+      font-size: 16px;
+    }
+    .vid-btn:active { transform: scale(0.9); }
+
+    .ig-link-btn {
+      position: absolute; top: 8px; right: 8px; z-index: 10;
+      width: 32px; height: 32px; border-radius: 50%; border: none;
+      background: rgba(0,0,0,0.6); cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+      text-decoration: none;
+    }
+    .ig-link-btn svg { width: 18px; height: 18px; fill: #fff; }
+    .ig-link-btn:active { transform: scale(0.9); }
 
     .one-reel .reel-col video { max-height: calc(100dvh - 180px); }
     .two-reels .reel-col video { max-height: calc(100dvh - 180px); }
@@ -130,6 +159,9 @@
       .two-reels .reel-col { flex: 1; width: 100%; max-width: 100%; }
       .two-reels .reel-col video { max-height: calc(50dvh - 80px); }
       .two-reels .video-loading { max-height: calc(50dvh - 80px); }
+      .vid-btn { width: 32px; height: 32px; font-size: 14px; }
+      .ig-link-btn { width: 28px; height: 28px; }
+      .ig-link-btn svg { width: 15px; height: 15px; }
     }
   </style>
 </head>
@@ -172,9 +204,17 @@
     if (el) el.innerHTML = `<a href="${igUrl}" target="_blank" style="color:#3b82f6;font-size:14px;">Open on Instagram</a>`;
   }
 
+  const igSvg = `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>`;
+
   function insertVideo(containerId, videoUrl) {
     const el = document.getElementById(containerId);
     if (!el) return;
+
+    const igUrl = el.dataset.igurl;
+
+    const wrap = document.createElement('div');
+    wrap.className = 'video-wrap';
+
     const video = document.createElement('video');
     video.src = videoUrl;
     video.setAttribute('playsinline', '');
@@ -182,10 +222,47 @@
     video.loop = true;
     video.muted = true;
     video.preload = 'auto';
-    video.addEventListener('click', () => { video.muted = !video.muted; });
-    el.replaceWith(video);
 
-    const card = video.closest('.card');
+    const igLink = document.createElement('a');
+    igLink.className = 'ig-link-btn';
+    igLink.href = igUrl;
+    igLink.target = '_blank';
+    igLink.innerHTML = igSvg;
+
+    const controls = document.createElement('div');
+    controls.className = 'video-controls';
+
+    const muteBtn = document.createElement('button');
+    muteBtn.className = 'vid-btn';
+    muteBtn.innerHTML = '🔇';
+    muteBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      video.muted = !video.muted;
+      muteBtn.innerHTML = video.muted ? '🔇' : '🔊';
+    });
+
+    const playBtn = document.createElement('button');
+    playBtn.className = 'vid-btn';
+    playBtn.innerHTML = '⏸';
+    playBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (video.paused) {
+        video.play();
+        playBtn.innerHTML = '⏸';
+      } else {
+        video.pause();
+        playBtn.innerHTML = '▶';
+      }
+    });
+
+    controls.appendChild(muteBtn);
+    controls.appendChild(playBtn);
+    wrap.appendChild(igLink);
+    wrap.appendChild(video);
+    wrap.appendChild(controls);
+    el.replaceWith(wrap);
+
+    const card = wrap.closest('.card');
     if (card && parseInt(card.dataset.index) === currentIndex) {
       video.play().catch(() => {});
     }
@@ -225,7 +302,7 @@
       let reelsHtml = '';
       if (has1) {
         reelsHtml += `<div class="reel-col">
-          <div class="video-loading" id="video-${i}-1"><div class="spinner"></div>Loading video...</div>
+          <div class="video-loading" id="video-${i}-1" data-igurl="${p.postLink1}"><div class="spinner"></div>Loading video...</div>
           <button class="approve-btn ${p.approved1 ? 'approved' : 'unapproved'}"
             onclick="toggleApprove(${i}, 1)" data-btn="${i}-1">
             ${p.approved1 ? 'Approved ✓' : 'Approve'}
@@ -234,7 +311,7 @@
       }
       if (has2) {
         reelsHtml += `<div class="reel-col">
-          <div class="video-loading" id="video-${i}-2"><div class="spinner"></div>Loading video...</div>
+          <div class="video-loading" id="video-${i}-2" data-igurl="${p.postLink2}"><div class="spinner"></div>Loading video...</div>
           <button class="approve-btn ${p.approved2 ? 'approved' : 'unapproved'}"
             onclick="toggleApprove(${i}, 2)" data-btn="${i}-2">
             ${p.approved2 ? 'Approved ✓' : 'Approve'}

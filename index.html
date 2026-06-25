@@ -66,18 +66,7 @@
       object-fit: contain;
     }
 
-    .video-controls {
-      position: absolute; bottom: 8px; right: 8px;
-      display: flex; gap: 6px; z-index: 10;
-    }
-    .vid-btn {
-      width: 36px; height: 36px; border-radius: 50%; border: none;
-      background: rgba(0,0,0,0.6); color: #fff; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
-      font-size: 16px;
-    }
-    .vid-btn:active { transform: scale(0.9); }
+    .reel-col .video-wrap { cursor: pointer; }
 
     .ig-link-btn {
       position: absolute; top: 8px; right: 8px; z-index: 10;
@@ -159,7 +148,6 @@
       .two-reels .reel-col { flex: 1; width: 100%; max-width: 100%; }
       .two-reels .reel-col video { max-height: calc(50dvh - 80px); }
       .two-reels .video-loading { max-height: calc(50dvh - 80px); }
-      .vid-btn { width: 32px; height: 32px; font-size: 14px; }
       .ig-link-btn { width: 28px; height: 28px; }
       .ig-link-btn svg { width: 15px; height: 15px; }
     }
@@ -228,38 +216,18 @@
     igLink.href = igUrl;
     igLink.target = '_blank';
     igLink.innerHTML = igSvg;
+    igLink.addEventListener('click', (e) => e.stopPropagation());
 
-    const controls = document.createElement('div');
-    controls.className = 'video-controls';
-
-    const muteBtn = document.createElement('button');
-    muteBtn.className = 'vid-btn';
-    muteBtn.innerHTML = '🔇';
-    muteBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      video.muted = !video.muted;
-      muteBtn.innerHTML = video.muted ? '🔇' : '🔊';
-    });
-
-    const playBtn = document.createElement('button');
-    playBtn.className = 'vid-btn';
-    playBtn.innerHTML = '⏸';
-    playBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
+    wrap.addEventListener('click', () => {
       if (video.paused) {
         video.play();
-        playBtn.innerHTML = '⏸';
       } else {
         video.pause();
-        playBtn.innerHTML = '▶';
       }
     });
 
-    controls.appendChild(muteBtn);
-    controls.appendChild(playBtn);
     wrap.appendChild(igLink);
     wrap.appendChild(video);
-    wrap.appendChild(controls);
     el.replaceWith(wrap);
 
     const card = wrap.closest('.card');
@@ -372,7 +340,9 @@
             }
           }
 
-          entry.target.querySelectorAll('video').forEach(v => {
+          const videos = entry.target.querySelectorAll('video');
+          videos.forEach((v, vi) => {
+            v.muted = vi > 0;
             v.play().catch(() => {});
           });
         } else {

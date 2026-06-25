@@ -1,4 +1,6 @@
 import os
+import subprocess
+import json
 from dotenv import load_dotenv
 from flask import Flask, send_file, jsonify, request
 import httpx
@@ -14,6 +16,30 @@ HEADERS = {
     "Notion-Version": "2022-06-28",
     "Content-Type": "application/json",
 }
+
+video_cache = {}
+
+
+def extract_video_url(ig_url):
+    if not ig_url:
+        return None
+    if ig_url in video_cache:
+        return video_cache[ig_url]
+    try:
+        clean = ig_url.split("?")[0]
+        result = subprocess.run(
+            ["python3", "-m", "yt_dlp", "--dump-json", "--no-download", clean],
+            capture_output=True, text=True, timeout=30,
+        )
+        if result.returncode == 0:
+            data = json.loads(result.stdout)
+            url = data.get("url")
+            if url:
+                video_cache[ig_url] = url
+                return url
+    except Exception:
+        pass
+    return None
 
 
 @app.route("/")
@@ -53,13 +79,18 @@ def get_posts():
         song_parts = props.get("Song name", {}).get("rich_text", [])
         song = song_parts[0]["plain_text"] if song_parts else ""
 
+        link1 = props.get("Post link 1", {}).get("url")
+        link2 = props.get("Post link 2", {}).get("url")
+
         posts.append({
             "id": page["id"],
             "instagram": instagram,
             "artistName": artist,
             "songName": song,
-            "postLink1": props.get("Post link 1", {}).get("url"),
-            "postLink2": props.get("Post link 2", {}).get("url"),
+            "postLink1": link1,
+            "postLink2": link2,
+            "videoUrl1": extract_video_url(link1),
+            "videoUrl2": extract_video_url(link2),
             "approved": props.get("Approve", {}).get("checkbox", False),
         })
 

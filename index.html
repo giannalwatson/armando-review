@@ -38,7 +38,6 @@
     }
     .empty span { font-size: 48px; margin-bottom: 16px; }
 
-    /* Header */
     .header {
       position: fixed;
       top: 0;
@@ -62,7 +61,6 @@
       font-weight: 500;
     }
 
-    /* Carousel */
     .carousel {
       height: 100dvh;
       overflow-y: scroll;
@@ -79,7 +77,6 @@
       position: relative;
     }
 
-    /* Reel area */
     .reel-container {
       flex: 1;
       display: flex;
@@ -100,10 +97,11 @@
       position: relative;
     }
 
-    .reel-wrapper iframe {
+    .reel-wrapper video {
       width: 100%;
-      border: none;
       display: block;
+      object-fit: cover;
+      border-radius: 12px;
     }
 
     .reel-label {
@@ -128,7 +126,20 @@
       font-size: 14px;
     }
 
-    /* Bottom bar */
+    .reel-fallback {
+      width: 100%;
+      max-width: 400px;
+      padding: 20px;
+      border-radius: 12px;
+      background: #1a1a1a;
+      text-align: center;
+    }
+    .reel-fallback a {
+      color: #3b82f6;
+      text-decoration: none;
+      font-size: 14px;
+    }
+
     .bottom-bar {
       padding: 12px 20px 28px;
       background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0) 100%);
@@ -184,7 +195,6 @@
       opacity: 0.5;
     }
 
-    /* Dots indicator */
     .dots {
       position: fixed;
       right: 8px;
@@ -214,22 +224,21 @@
       transform: scale(1.4);
     }
 
-    /* Two-reel layout */
-    .two-reels .reel-wrapper iframe {
-      height: 280px;
+    .two-reels .reel-wrapper video {
+      max-height: 280px;
     }
-    .one-reel .reel-wrapper iframe {
-      height: 500px;
+    .one-reel .reel-wrapper video {
+      max-height: 500px;
     }
 
     @media (max-height: 700px) {
-      .two-reels .reel-wrapper iframe { height: 220px; }
-      .one-reel .reel-wrapper iframe { height: 380px; }
+      .two-reels .reel-wrapper video { max-height: 220px; }
+      .one-reel .reel-wrapper video { max-height: 380px; }
     }
 
     @media (min-height: 900px) {
-      .two-reels .reel-wrapper iframe { height: 340px; }
-      .one-reel .reel-wrapper iframe { height: 600px; }
+      .two-reels .reel-wrapper video { max-height: 340px; }
+      .one-reel .reel-wrapper video { max-height: 600px; }
     }
   </style>
 </head>
@@ -243,17 +252,6 @@
   let posts = [];
   let currentIndex = 0;
 
-  function extractEmbedUrl(url) {
-    if (!url) return null;
-    try {
-      const u = new URL(url);
-      const path = u.pathname.replace(/\/$/, '');
-      return `https://www.instagram.com${path}/embed/`;
-    } catch {
-      return null;
-    }
-  }
-
   async function loadPosts() {
     try {
       const res = await fetch('/api/posts');
@@ -263,6 +261,31 @@
       document.getElementById('app').innerHTML =
         `<div class="loading">Error loading posts: ${err.message}</div>`;
     }
+  }
+
+  function buildReelHtml(videoUrl, postLink, label) {
+    if (videoUrl) {
+      return `
+        ${label ? `<div class="reel-label">${label}</div>` : ''}
+        <div class="reel-wrapper">
+          <video
+            src="${videoUrl}"
+            playsinline
+            webkit-playsinline
+            loop
+            muted
+            preload="metadata"
+          ></video>
+        </div>`;
+    }
+    if (postLink) {
+      return `
+        ${label ? `<div class="reel-label">${label}</div>` : ''}
+        <div class="reel-fallback">
+          <a href="${postLink}" target="_blank">Open reel on Instagram</a>
+        </div>`;
+    }
+    return '';
   }
 
   function render() {
@@ -277,29 +300,15 @@
     ).join('');
 
     const cardsHtml = posts.map((p, i) => {
-      const embed1 = extractEmbedUrl(p.postLink1);
-      const embed2 = extractEmbedUrl(p.postLink2);
-      const reelCount = (embed1 ? 1 : 0) + (embed2 ? 1 : 0);
+      const has1 = p.videoUrl1 || p.postLink1;
+      const has2 = p.videoUrl2 || p.postLink2;
+      const reelCount = (has1 ? 1 : 0) + (has2 ? 1 : 0);
       const layoutClass = reelCount >= 2 ? 'two-reels' : 'one-reel';
 
       let reelsHtml = '';
-      if (embed1) {
-        reelsHtml += `
-          ${reelCount >= 2 ? '<div class="reel-label">Reel 1</div>' : ''}
-          <div class="reel-wrapper">
-            <iframe src="${embed1}" loading="lazy" allowfullscreen></iframe>
-          </div>`;
-      }
-      if (embed2) {
-        reelsHtml += `
-          <div class="reel-label">Reel 2</div>
-          <div class="reel-wrapper">
-            <iframe src="${embed2}" loading="lazy" allowfullscreen></iframe>
-          </div>`;
-      }
-      if (!embed1 && !embed2) {
-        reelsHtml = '<div class="no-reel">No reel links</div>';
-      }
+      if (has1) reelsHtml += buildReelHtml(p.videoUrl1, p.postLink1, reelCount >= 2 ? 'Reel 1' : null);
+      if (has2) reelsHtml += buildReelHtml(p.videoUrl2, p.postLink2, 'Reel 2');
+      if (!has1 && !has2) reelsHtml = '<div class="no-reel">No reel links</div>';
 
       const details = [p.artistName, p.songName].filter(Boolean).join(' — ');
 
@@ -334,17 +343,35 @@
     const carousel = document.getElementById('carousel');
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
+        const idx = parseInt(entry.target.dataset.index);
+        const videos = entry.target.querySelectorAll('video');
         if (entry.isIntersecting) {
-          currentIndex = parseInt(entry.target.dataset.index);
-          document.getElementById('current-num').textContent = currentIndex + 1;
+          currentIndex = idx;
+          document.getElementById('current-num').textContent = idx + 1;
           document.querySelectorAll('.dot').forEach((d, di) => {
-            d.classList.toggle('active', di === currentIndex);
+            d.classList.toggle('active', di === idx);
+          });
+          videos.forEach(v => {
+            v.muted = true;
+            v.play().catch(() => {});
+          });
+        } else {
+          videos.forEach(v => {
+            v.pause();
+            v.currentTime = 0;
           });
         }
       });
     }, { root: carousel, threshold: 0.6 });
 
     document.querySelectorAll('.card').forEach((card) => observer.observe(card));
+
+    // Tap video to unmute/mute
+    document.querySelectorAll('video').forEach(v => {
+      v.addEventListener('click', () => {
+        v.muted = !v.muted;
+      });
+    });
   }
 
   async function toggleApprove(index) {

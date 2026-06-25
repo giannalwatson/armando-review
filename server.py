@@ -1,4 +1,6 @@
 import os
+import subprocess
+import json
 from dotenv import load_dotenv
 from flask import Flask, send_file, jsonify, request
 import httpx
@@ -14,6 +16,30 @@ HEADERS = {
     "Notion-Version": "2022-06-28",
     "Content-Type": "application/json",
 }
+
+video_cache = {}
+
+
+def extract_video_url(ig_url):
+    if not ig_url:
+        return None
+    if ig_url in video_cache:
+        return video_cache[ig_url]
+    try:
+        clean = ig_url.split("?")[0]
+        result = subprocess.run(
+            ["python3", "-m", "yt_dlp", "--dump-json", "--no-download", clean],
+            capture_output=True, text=True, timeout=60,
+        )
+        if result.returncode == 0:
+            data = json.loads(result.stdout)
+            url = data.get("url")
+            if url:
+                video_cache[ig_url] = url
+                return url
+    except Exception:
+        pass
+    return None
 
 
 @app.route("/")
@@ -73,6 +99,15 @@ def get_posts():
         })
 
     return jsonify(posts)
+
+
+@app.route("/api/video")
+def get_video():
+    ig_url = request.args.get("url")
+    if not ig_url:
+        return jsonify({"error": "Missing url param"}), 400
+    video_url = extract_video_url(ig_url)
+    return jsonify({"videoUrl": video_url})
 
 
 @app.route("/api/approve/<page_id>", methods=["POST"])

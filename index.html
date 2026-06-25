@@ -6,26 +6,16 @@
   <title>Review Reels</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #0a0a0a;
-      color: #fff;
-      overflow: hidden;
-      height: 100dvh;
-      width: 100vw;
+      background: #0a0a0a; color: #fff; overflow: hidden;
+      height: 100dvh; width: 100vw;
     }
-
-    .loading {
+    .loading, .empty {
       display: flex; align-items: center; justify-content: center;
       height: 100dvh; font-size: 18px; color: #888;
     }
-
-    .empty {
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      height: 100dvh; font-size: 20px; color: #888; text-align: center; padding: 40px;
-    }
-
+    .empty { flex-direction: column; text-align: center; padding: 40px; font-size: 20px; }
     .header {
       position: fixed; top: 0; left: 0; right: 0; z-index: 100;
       padding: 12px 20px 10px;
@@ -34,35 +24,60 @@
     }
     .header h1 { font-size: 18px; font-weight: 700; }
     .counter { font-size: 14px; color: #888; font-weight: 500; }
-
     .carousel {
       height: 100dvh; overflow-y: scroll;
       scroll-snap-type: y mandatory; -webkit-overflow-scrolling: touch;
     }
-
     .card {
       height: 100dvh; scroll-snap-align: start; scroll-snap-stop: always;
       display: flex; flex-direction: column; position: relative;
     }
-
     .reels-area {
       flex: 1; display: flex; align-items: center; justify-content: center;
       padding: 48px 8px 0; gap: 8px; min-height: 0; overflow: hidden;
     }
-
     .reel-col {
       display: flex; flex-direction: column; align-items: center;
       gap: 6px; min-width: 0; flex: 1; max-width: 400px;
       height: 100%; justify-content: center;
     }
-
-    .reel-col iframe {
-      width: 100%; border: none; border-radius: 10px; background: #1a1a1a;
+    .video-wrap {
+      position: relative; width: 100%; border-radius: 10px; overflow: hidden;
+      background: #1a1a1a; cursor: pointer;
     }
-
-    .one-reel .reel-col iframe { max-height: calc(100dvh - 160px); aspect-ratio: 9/16; }
-    .two-reels .reel-col iframe { max-height: calc(100dvh - 160px); aspect-ratio: 9/16; }
-
+    .video-wrap video {
+      width: 100%; display: block; object-fit: contain; background: #1a1a1a;
+    }
+    .one-reel .video-wrap video { max-height: calc(100dvh - 180px); }
+    .two-reels .video-wrap video { max-height: calc(100dvh - 180px); }
+    .mute-btn {
+      position: absolute; bottom: 8px; right: 8px; z-index: 10;
+      width: 36px; height: 36px; border-radius: 50%; border: none;
+      background: rgba(0,0,0,0.6); color: #fff; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      backdrop-filter: blur(4px); font-size: 16px;
+    }
+    .mute-btn:active { transform: scale(0.9); }
+    .ig-link-btn {
+      position: absolute; top: 8px; right: 8px; z-index: 10;
+      width: 32px; height: 32px; border-radius: 50%; border: none;
+      background: rgba(0,0,0,0.6); cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      backdrop-filter: blur(4px); text-decoration: none;
+    }
+    .ig-link-btn svg { width: 18px; height: 18px; fill: #fff; }
+    .ig-link-btn:active { transform: scale(0.9); }
+    .video-loading {
+      width: 100%; aspect-ratio: 9/16; max-height: calc(100dvh - 180px);
+      border-radius: 10px; background: #1a1a1a;
+      display: flex; align-items: center; justify-content: center;
+      color: #666; font-size: 14px;
+    }
+    .video-loading .spinner {
+      width: 24px; height: 24px; border: 2px solid #333; border-top-color: #888;
+      border-radius: 50%; animation: spin 0.8s linear infinite; margin-right: 10px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
     .approve-btn {
       width: 100%; padding: 10px; border-radius: 10px; border: none;
       font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s ease;
@@ -72,20 +87,17 @@
     .approve-btn.approved { background: #22c55e; color: #fff; }
     .approve-btn.approved:active { transform: scale(0.97); }
     .approve-btn:disabled { opacity: 0.5; }
-
     .no-reel {
       width: 100%; max-width: 400px; height: 200px; border-radius: 12px;
       background: #1a1a1a; display: flex; align-items: center; justify-content: center;
       color: #444; font-size: 14px;
     }
-
     .bottom-bar {
       padding: 8px 20px 24px; display: flex; justify-content: space-between; align-items: flex-end;
     }
     .artist-info { display: flex; flex-direction: column; gap: 2px; }
     .artist-info .handle { font-size: 16px; font-weight: 700; }
     .artist-info .details { font-size: 13px; color: #888; }
-
     .spotify-link {
       display: flex; align-items: center; gap: 6px;
       color: #1db954; text-decoration: none; font-size: 13px; font-weight: 600;
@@ -94,46 +106,103 @@
     }
     .spotify-link:hover { background: rgba(29,185,84,0.2); }
     .spotify-link svg { width: 18px; height: 18px; fill: #1db954; }
-
     .dots {
       position: fixed; right: 6px; top: 50%; transform: translateY(-50%);
       display: flex; flex-direction: column; gap: 5px; z-index: 100;
     }
-    .dot {
-      width: 6px; height: 6px; border-radius: 50%;
-      background: rgba(255,255,255,0.25); transition: all 0.2s;
-    }
+    .dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.25); transition: all 0.2s; }
     .dot.active { background: #fff; transform: scale(1.4); }
     .dot.is-approved { background: rgba(34,197,94,0.5); }
     .dot.active.is-approved { background: #22c55e; transform: scale(1.4); }
-
     @media (min-width: 700px) {
       .two-reels .reels-area { flex-direction: row; }
       .two-reels .reel-col { flex: 1; max-width: 380px; }
     }
-
     @media (max-width: 699px) {
       .two-reels .reels-area { flex-direction: column; gap: 6px; }
       .two-reels .reel-col { flex: 1; width: 100%; max-width: 100%; }
-      .two-reels .reel-col iframe { max-height: calc(50dvh - 70px); }
+      .two-reels .video-wrap video { max-height: calc(50dvh - 80px); }
+      .two-reels .video-loading { max-height: calc(50dvh - 80px); }
     }
   </style>
 </head>
 <body>
-
-<div id="app">
-  <div class="loading">Loading posts...</div>
-</div>
-
+<div id="app"><div class="loading">Loading posts...</div></div>
 <script>
   let posts = [];
   let currentIndex = 0;
+  const videoUrlCache = {};
+  const loadingVideos = {};
 
-  function embedUrl(igUrl) {
-    if (!igUrl) return null;
-    let clean = igUrl.split("?")[0];
-    if (!clean.endsWith("/")) clean += "/";
-    return clean + "embed/";
+  const igSvg = `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>`;
+  const spotifySvg = `<svg viewBox="0 0 24 24"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>`;
+
+  async function fetchVideoUrl(igUrl, containerId) {
+    if (!igUrl || loadingVideos[igUrl]) return;
+    if (videoUrlCache[igUrl]) { insertVideo(containerId, videoUrlCache[igUrl], igUrl); return; }
+    loadingVideos[igUrl] = true;
+    try {
+      const res = await fetch(`/api/video?url=${encodeURIComponent(igUrl)}`);
+      const data = await res.json();
+      if (data.videoUrl) { videoUrlCache[igUrl] = data.videoUrl; insertVideo(containerId, data.videoUrl, igUrl); }
+      else { showFallback(containerId, igUrl); }
+    } catch { showFallback(containerId, igUrl); }
+    loadingVideos[igUrl] = false;
+  }
+
+  function showFallback(containerId, igUrl) {
+    const el = document.getElementById(containerId);
+    if (el) el.innerHTML = `<a href="${igUrl}" target="_blank" style="color:#3b82f6;font-size:14px;">Open on Instagram</a>`;
+  }
+
+  function insertVideo(containerId, videoUrl, igUrl) {
+    const el = document.getElementById(containerId);
+    if (!el) return;
+
+    const wrap = document.createElement('div');
+    wrap.className = 'video-wrap';
+
+    const video = document.createElement('video');
+    video.src = videoUrl;
+    video.setAttribute('playsinline', '');
+    video.setAttribute('webkit-playsinline', '');
+    video.loop = true;
+    video.muted = true;
+    video.preload = 'auto';
+
+    const igLink = document.createElement('a');
+    igLink.className = 'ig-link-btn';
+    igLink.href = igUrl;
+    igLink.target = '_blank';
+    igLink.innerHTML = igSvg;
+    igLink.addEventListener('click', (e) => e.stopPropagation());
+
+    const muteBtn = document.createElement('button');
+    muteBtn.className = 'mute-btn';
+    muteBtn.innerHTML = '🔇';
+    muteBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      video.muted = !video.muted;
+      muteBtn.innerHTML = video.muted ? '🔇' : '🔊';
+    });
+
+    wrap.addEventListener('click', () => {
+      if (video.paused) video.play(); else video.pause();
+    });
+
+    wrap.appendChild(igLink);
+    wrap.appendChild(video);
+    wrap.appendChild(muteBtn);
+    el.replaceWith(wrap);
+
+    const card = wrap.closest('.card');
+    if (card && parseInt(card.dataset.index) === currentIndex) {
+      const isFirst = !wrap.closest('.reel-col').previousElementSibling ||
+        !wrap.closest('.reel-col').previousElementSibling.classList.contains('reel-col');
+      video.muted = !isFirst;
+      muteBtn.innerHTML = video.muted ? '🔇' : '🔊';
+      video.play().catch(() => {});
+    }
   }
 
   async function loadPosts() {
@@ -142,80 +211,38 @@
       posts = await res.json();
       render();
     } catch (err) {
-      document.getElementById('app').innerHTML =
-        `<div class="loading">Error: ${err.message}</div>`;
+      document.getElementById('app').innerHTML = `<div class="loading">Error: ${err.message}</div>`;
     }
   }
 
   function render() {
     if (posts.length === 0) {
-      document.getElementById('app').innerHTML =
-        '<div class="empty">No posts to review right now</div>';
+      document.getElementById('app').innerHTML = '<div class="empty">No posts to review right now</div>';
       return;
     }
 
-    const spotifySvg = `<svg viewBox="0 0 24 24"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>`;
-
     const dotsHtml = posts.map((p, i) => {
-      const anyApproved = p.approved1 || p.approved2;
-      return `<div class="dot ${i === 0 ? 'active' : ''} ${anyApproved ? 'is-approved' : ''}" data-i="${i}"></div>`;
+      const any = p.approved1 || p.approved2;
+      return `<div class="dot ${i === 0 ? 'active' : ''} ${any ? 'is-approved' : ''}"></div>`;
     }).join('');
 
     const cardsHtml = posts.map((p, i) => {
-      const has1 = !!p.postLink1;
-      const has2 = !!p.postLink2;
-      const reelCount = (has1 ? 1 : 0) + (has2 ? 1 : 0);
-      const layoutClass = reelCount >= 2 ? 'two-reels' : reelCount === 1 ? 'one-reel' : '';
-
-      let reelsHtml = '';
-      if (has1) {
-        reelsHtml += `<div class="reel-col">
-          <iframe src="${embedUrl(p.postLink1)}" allowfullscreen loading="lazy"></iframe>
-          <button class="approve-btn ${p.approved1 ? 'approved' : 'unapproved'}"
-            onclick="toggleApprove(${i}, 1)" data-btn="${i}-1">
-            ${p.approved1 ? 'Approved ✓' : 'Approve'}
-          </button>
-        </div>`;
-      }
-      if (has2) {
-        reelsHtml += `<div class="reel-col">
-          <iframe src="${embedUrl(p.postLink2)}" allowfullscreen loading="lazy"></iframe>
-          <button class="approve-btn ${p.approved2 ? 'approved' : 'unapproved'}"
-            onclick="toggleApprove(${i}, 2)" data-btn="${i}-2">
-            ${p.approved2 ? 'Approved ✓' : 'Approve'}
-          </button>
-        </div>`;
-      }
-      if (!has1 && !has2) {
-        reelsHtml = '<div class="no-reel">No reel links</div>';
-      }
-
-      const details = [p.artistName, p.songName].filter(Boolean).join(' — ');
-      const spotifyHtml = p.spotifyLink
-        ? `<a class="spotify-link" href="${p.spotifyLink}" target="_blank">${spotifySvg} Spotify</a>`
-        : '';
-
-      return `
-        <div class="card ${layoutClass}" data-index="${i}">
-          <div class="reels-area">${reelsHtml}</div>
-          <div class="bottom-bar">
-            <div class="artist-info">
-              <div class="handle">@${p.instagram}</div>
-              ${details ? `<div class="details">${details}</div>` : ''}
-            </div>
-            ${spotifyHtml}
-          </div>
-        </div>`;
+      const has1 = !!p.postLink1, has2 = !!p.postLink2;
+      const rc = (has1?1:0)+(has2?1:0);
+      const lc = rc >= 2 ? 'two-reels' : rc === 1 ? 'one-reel' : '';
+      let rh = '';
+      if (has1) rh += `<div class="reel-col"><div class="video-loading" id="video-${i}-1"><div class="spinner"></div>Loading video...</div><button class="approve-btn ${p.approved1?'approved':'unapproved'}" onclick="toggleApprove(${i},1)" data-btn="${i}-1">${p.approved1?'Approved ✓':'Approve'}</button></div>`;
+      if (has2) rh += `<div class="reel-col"><div class="video-loading" id="video-${i}-2"><div class="spinner"></div>Loading video...</div><button class="approve-btn ${p.approved2?'approved':'unapproved'}" onclick="toggleApprove(${i},2)" data-btn="${i}-2">${p.approved2?'Approved ✓':'Approve'}</button></div>`;
+      if (!has1 && !has2) rh = '<div class="no-reel">No reel links</div>';
+      const det = [p.artistName, p.songName].filter(Boolean).join(' — ');
+      const sp = p.spotifyLink ? `<a class="spotify-link" href="${p.spotifyLink}" target="_blank">${spotifySvg} Spotify</a>` : '';
+      return `<div class="card ${lc}" data-index="${i}"><div class="reels-area">${rh}</div><div class="bottom-bar"><div class="artist-info"><div class="handle">@${p.instagram}</div>${det?`<div class="details">${det}</div>`:''}</div>${sp}</div></div>`;
     }).join('');
 
     document.getElementById('app').innerHTML = `
-      <div class="header">
-        <h1>Review Reels</h1>
-        <div class="counter"><span id="current-num">1</span> / ${posts.length}</div>
-      </div>
+      <div class="header"><h1>Review Reels</h1><div class="counter"><span id="current-num">1</span> / ${posts.length}</div></div>
       <div class="dots">${dotsHtml}</div>
-      <div class="carousel" id="carousel">${cardsHtml}</div>
-    `;
+      <div class="carousel" id="carousel">${cardsHtml}</div>`;
 
     const carousel = document.getElementById('carousel');
     const observer = new IntersectionObserver((entries) => {
@@ -224,13 +251,33 @@
         if (entry.isIntersecting) {
           currentIndex = idx;
           document.getElementById('current-num').textContent = idx + 1;
-          document.querySelectorAll('.dot').forEach((d, di) => {
-            d.classList.toggle('active', di === idx);
+          document.querySelectorAll('.dot').forEach((d, di) => d.classList.toggle('active', di === idx));
+          const p = posts[idx];
+          if (p.postLink1) fetchVideoUrl(p.postLink1, `video-${idx}-1`);
+          if (p.postLink2) fetchVideoUrl(p.postLink2, `video-${idx}-2`);
+          for (let n = 1; n <= 2; n++) {
+            const next = posts[idx + n];
+            if (next) {
+              if (next.postLink1) fetchVideoUrl(next.postLink1, `video-${idx+n}-1`);
+              if (next.postLink2) fetchVideoUrl(next.postLink2, `video-${idx+n}-2`);
+            }
+          }
+          const videos = entry.target.querySelectorAll('video');
+          videos.forEach((v, vi) => {
+            v.muted = vi > 0;
+            const mb = v.closest('.video-wrap')?.querySelector('.mute-btn');
+            if (mb) mb.innerHTML = v.muted ? '🔇' : '🔊';
+            v.play().catch(() => {});
+          });
+        } else {
+          entry.target.querySelectorAll('video').forEach(v => {
+            v.pause(); v.muted = true; v.currentTime = 0;
+            const mb = v.closest('.video-wrap')?.querySelector('.mute-btn');
+            if (mb) mb.innerHTML = '🔇';
           });
         }
       });
     }, { root: carousel, threshold: 0.6 });
-
     document.querySelectorAll('.card').forEach(card => observer.observe(card));
   }
 
@@ -239,34 +286,21 @@
     const key = linkNum === 1 ? 'approved1' : 'approved2';
     const newVal = !post[key];
     const btn = document.querySelector(`[data-btn="${index}-${linkNum}"]`);
-
-    btn.disabled = true;
-    btn.textContent = 'Saving...';
-
+    btn.disabled = true; btn.textContent = 'Saving...';
     try {
-      const body = {};
-      body[key] = newVal;
-      const res = await fetch(`/api/approve/${post.id}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
+      const body = {}; body[key] = newVal;
+      const res = await fetch(`/api/approve/${post.id}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       if (!res.ok) throw new Error('Failed');
-
       post[key] = newVal;
       btn.className = `approve-btn ${newVal ? 'approved' : 'unapproved'}`;
       btn.textContent = newVal ? 'Approved ✓' : 'Approve';
-
       const dot = document.querySelectorAll('.dot')[index];
       dot.classList.toggle('is-approved', post.approved1 || post.approved2);
-    } catch {
-      btn.textContent = 'Error — tap to retry';
-    }
+    } catch { btn.textContent = 'Error — tap to retry'; }
     btn.disabled = false;
   }
 
   loadPosts();
 </script>
-
 </body>
 </html>

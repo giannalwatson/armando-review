@@ -36,7 +36,6 @@
       text-align: center;
       padding: 40px;
     }
-    .empty span { font-size: 48px; margin-bottom: 16px; }
 
     .header {
       position: fixed;
@@ -44,22 +43,14 @@
       left: 0;
       right: 0;
       z-index: 100;
-      padding: 16px 20px 12px;
+      padding: 12px 20px 10px;
       background: linear-gradient(to bottom, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%);
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
-    .header h1 {
-      font-size: 18px;
-      font-weight: 700;
-      letter-spacing: -0.3px;
-    }
-    .counter {
-      font-size: 14px;
-      color: #888;
-      font-weight: 500;
-    }
+    .header h1 { font-size: 18px; font-weight: 700; }
+    .counter { font-size: 14px; color: #888; font-weight: 500; }
 
     .carousel {
       height: 100dvh;
@@ -77,41 +68,61 @@
       position: relative;
     }
 
-    .reel-container {
+    .reels-area {
       flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 8px 0;
+      gap: 8px;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .reel-col {
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      padding: 60px 12px 0;
-      gap: 8px;
-      min-height: 0;
-    }
-
-    .reel-wrapper {
-      width: 100%;
+      gap: 6px;
+      min-width: 0;
+      flex: 1;
       max-width: 400px;
-      border-radius: 12px;
-      overflow: hidden;
-      background: #1a1a1a;
-      position: relative;
+      height: 100%;
+      justify-content: center;
     }
 
-    .reel-wrapper video {
+    .reel-col iframe {
       width: 100%;
-      display: block;
-      object-fit: cover;
-      border-radius: 12px;
+      border: none;
+      border-radius: 10px;
+      background: #1a1a1a;
     }
 
-    .reel-label {
-      font-size: 11px;
-      color: #666;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      font-weight: 600;
-      text-align: center;
+    .one-reel .reel-col iframe {
+      max-height: calc(100dvh - 180px);
+      aspect-ratio: 9/16;
     }
+
+    .two-reels .reel-col iframe {
+      max-height: calc(100dvh - 180px);
+      aspect-ratio: 9/16;
+    }
+
+    .approve-btn {
+      width: 100%;
+      padding: 10px;
+      border-radius: 10px;
+      border: none;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .approve-btn.unapproved { background: #fff; color: #000; }
+    .approve-btn.unapproved:active { background: #ddd; transform: scale(0.97); }
+    .approve-btn.approved { background: #22c55e; color: #fff; }
+    .approve-btn.approved:active { transform: scale(0.97); }
+    .approve-btn:disabled { opacity: 0.5; }
 
     .no-reel {
       width: 100%;
@@ -126,130 +137,60 @@
       font-size: 14px;
     }
 
-    .video-loading {
-      width: 100%;
-      max-width: 400px;
-      height: 300px;
-      border-radius: 12px;
-      background: #1a1a1a;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #666;
-      font-size: 14px;
-    }
-
-    .video-loading .spinner {
-      width: 24px;
-      height: 24px;
-      border: 2px solid #333;
-      border-top-color: #888;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      margin-right: 10px;
-    }
-
-    @keyframes spin { to { transform: rotate(360deg); } }
-
     .bottom-bar {
-      padding: 12px 20px 28px;
-      background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0) 100%);
+      padding: 8px 20px 24px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 6px;
     }
-
-    .artist-info {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-    .artist-info .handle {
-      font-size: 16px;
-      font-weight: 700;
-    }
-    .artist-info .details {
-      font-size: 13px;
-      color: #888;
-    }
-
-    .approve-btn {
-      width: 100%;
-      padding: 16px;
-      border-radius: 14px;
-      border: none;
-      font-size: 17px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      letter-spacing: -0.2px;
-    }
-
-    .approve-btn.unapproved {
-      background: #fff;
-      color: #000;
-    }
-    .approve-btn.unapproved:active {
-      background: #ddd;
-      transform: scale(0.97);
-    }
-
-    .approve-btn.approved {
-      background: #22c55e;
-      color: #fff;
-    }
-    .approve-btn.approved:active {
-      transform: scale(0.97);
-    }
-
-    .approve-btn:disabled {
-      opacity: 0.5;
-    }
+    .artist-info { display: flex; flex-direction: column; gap: 2px; }
+    .artist-info .handle { font-size: 16px; font-weight: 700; }
+    .artist-info .details { font-size: 13px; color: #888; }
 
     .dots {
       position: fixed;
-      right: 8px;
+      right: 6px;
       top: 50%;
       transform: translateY(-50%);
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 5px;
       z-index: 100;
     }
     .dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
+      width: 6px; height: 6px; border-radius: 50%;
       background: rgba(255,255,255,0.25);
       transition: all 0.2s;
     }
-    .dot.active {
-      background: #fff;
-      transform: scale(1.4);
-    }
-    .dot.is-approved {
-      background: rgba(34,197,94,0.5);
-    }
-    .dot.active.is-approved {
-      background: #22c55e;
-      transform: scale(1.4);
+    .dot.active { background: #fff; transform: scale(1.4); }
+    .dot.is-approved { background: rgba(34,197,94,0.5); }
+    .dot.active.is-approved { background: #22c55e; transform: scale(1.4); }
+
+    /* Desktop: side by side */
+    @media (min-width: 700px) {
+      .two-reels .reels-area {
+        flex-direction: row;
+      }
+      .two-reels .reel-col {
+        flex: 1;
+        max-width: 380px;
+      }
     }
 
-    .two-reels .reel-wrapper video {
-      max-height: 280px;
-    }
-    .one-reel .reel-wrapper video {
-      max-height: 500px;
-    }
-
-    @media (max-height: 700px) {
-      .two-reels .reel-wrapper video { max-height: 220px; }
-      .one-reel .reel-wrapper video { max-height: 380px; }
-    }
-
-    @media (min-height: 900px) {
-      .two-reels .reel-wrapper video { max-height: 340px; }
-      .one-reel .reel-wrapper video { max-height: 600px; }
+    /* Mobile: stacked full width */
+    @media (max-width: 699px) {
+      .two-reels .reels-area {
+        flex-direction: column;
+        gap: 6px;
+      }
+      .two-reels .reel-col {
+        flex: 1;
+        width: 100%;
+        max-width: 100%;
+      }
+      .two-reels .reel-col iframe {
+        max-height: calc(50dvh - 80px);
+      }
     }
   </style>
 </head>
@@ -262,8 +203,13 @@
 <script>
   let posts = [];
   let currentIndex = 0;
-  const videoUrlCache = {};
-  const loadingVideos = {};
+
+  function embedUrl(igUrl) {
+    if (!igUrl) return null;
+    let clean = igUrl.split("?")[0];
+    if (!clean.endsWith("/")) clean += "/";
+    return clean + "embed/";
+  }
 
   async function loadPosts() {
     try {
@@ -272,87 +218,46 @@
       render();
     } catch (err) {
       document.getElementById('app').innerHTML =
-        `<div class="loading">Error loading posts: ${err.message}</div>`;
-    }
-  }
-
-  async function fetchVideoUrl(igUrl, containerId) {
-    if (!igUrl || loadingVideos[igUrl]) return;
-    if (videoUrlCache[igUrl]) {
-      insertVideo(containerId, videoUrlCache[igUrl]);
-      return;
-    }
-    loadingVideos[igUrl] = true;
-    try {
-      const res = await fetch(`/api/video?url=${encodeURIComponent(igUrl)}`);
-      const data = await res.json();
-      if (data.videoUrl) {
-        videoUrlCache[igUrl] = data.videoUrl;
-        insertVideo(containerId, data.videoUrl);
-      } else {
-        const el = document.getElementById(containerId);
-        if (el) el.innerHTML = `<a href="${igUrl}" target="_blank" style="color:#3b82f6;font-size:14px;">Open on Instagram</a>`;
-      }
-    } catch {
-      const el = document.getElementById(containerId);
-      if (el) el.innerHTML = `<a href="${igUrl}" target="_blank" style="color:#3b82f6;font-size:14px;">Open on Instagram</a>`;
-    }
-    loadingVideos[igUrl] = false;
-  }
-
-  function insertVideo(containerId, videoUrl) {
-    const el = document.getElementById(containerId);
-    if (!el) return;
-    const wrapper = el.closest('.reel-wrapper') || el.parentElement;
-    const video = document.createElement('video');
-    video.src = videoUrl;
-    video.setAttribute('playsinline', '');
-    video.setAttribute('webkit-playsinline', '');
-    video.loop = true;
-    video.muted = true;
-    video.preload = 'metadata';
-    video.style.cssText = 'width:100%;display:block;object-fit:cover;border-radius:12px;';
-    video.addEventListener('click', () => { video.muted = !video.muted; });
-
-    el.replaceWith(video);
-
-    const card = video.closest('.card');
-    if (card && parseInt(card.dataset.index) === currentIndex) {
-      video.play().catch(() => {});
+        `<div class="loading">Error: ${err.message}</div>`;
     }
   }
 
   function render() {
     if (posts.length === 0) {
       document.getElementById('app').innerHTML =
-        '<div class="empty"><span>&#10024;</span>No posts to review right now</div>';
+        '<div class="empty">No posts to review right now</div>';
       return;
     }
 
-    const dotsHtml = posts.map((p, i) =>
-      `<div class="dot ${i === 0 ? 'active' : ''} ${p.approved ? 'is-approved' : ''}" data-i="${i}"></div>`
-    ).join('');
+    const dotsHtml = posts.map((p, i) => {
+      const anyApproved = p.approved1 || p.approved2;
+      return `<div class="dot ${i === 0 ? 'active' : ''} ${anyApproved ? 'is-approved' : ''}" data-i="${i}"></div>`;
+    }).join('');
 
     const cardsHtml = posts.map((p, i) => {
       const has1 = !!p.postLink1;
       const has2 = !!p.postLink2;
       const reelCount = (has1 ? 1 : 0) + (has2 ? 1 : 0);
-      const layoutClass = reelCount >= 2 ? 'two-reels' : 'one-reel';
+      const layoutClass = reelCount >= 2 ? 'two-reels' : reelCount === 1 ? 'one-reel' : '';
 
       let reelsHtml = '';
       if (has1) {
-        reelsHtml += `
-          ${reelCount >= 2 ? '<div class="reel-label">Reel 1</div>' : ''}
-          <div class="reel-wrapper">
-            <div class="video-loading" id="video-${i}-1"><div class="spinner"></div>Loading video...</div>
-          </div>`;
+        reelsHtml += `<div class="reel-col">
+          <iframe src="${embedUrl(p.postLink1)}" allowfullscreen loading="lazy"></iframe>
+          <button class="approve-btn ${p.approved1 ? 'approved' : 'unapproved'}"
+            onclick="toggleApprove(${i}, 1)" data-btn="${i}-1">
+            ${p.approved1 ? 'Approved ✓' : 'Approve'}
+          </button>
+        </div>`;
       }
       if (has2) {
-        reelsHtml += `
-          <div class="reel-label">Reel 2</div>
-          <div class="reel-wrapper">
-            <div class="video-loading" id="video-${i}-2"><div class="spinner"></div>Loading video...</div>
-          </div>`;
+        reelsHtml += `<div class="reel-col">
+          <iframe src="${embedUrl(p.postLink2)}" allowfullscreen loading="lazy"></iframe>
+          <button class="approve-btn ${p.approved2 ? 'approved' : 'unapproved'}"
+            onclick="toggleApprove(${i}, 2)" data-btn="${i}-2">
+            ${p.approved2 ? 'Approved ✓' : 'Approve'}
+          </button>
+        </div>`;
       }
       if (!has1 && !has2) {
         reelsHtml = '<div class="no-reel">No reel links</div>';
@@ -362,19 +267,12 @@
 
       return `
         <div class="card ${layoutClass}" data-index="${i}">
-          <div class="reel-container">${reelsHtml}</div>
+          <div class="reels-area">${reelsHtml}</div>
           <div class="bottom-bar">
             <div class="artist-info">
               <div class="handle">@${p.instagram}</div>
               ${details ? `<div class="details">${details}</div>` : ''}
             </div>
-            <button
-              class="approve-btn ${p.approved ? 'approved' : 'unapproved'}"
-              onclick="toggleApprove(${i})"
-              data-btn="${i}"
-            >
-              ${p.approved ? 'Approved ✓' : 'Approve'}
-            </button>
           </div>
         </div>`;
     }).join('');
@@ -398,62 +296,41 @@
           document.querySelectorAll('.dot').forEach((d, di) => {
             d.classList.toggle('active', di === idx);
           });
-
-          const p = posts[idx];
-          if (p.postLink1) fetchVideoUrl(p.postLink1, `video-${idx}-1`);
-          if (p.postLink2) fetchVideoUrl(p.postLink2, `video-${idx}-2`);
-
-          // Pre-fetch next 2
-          for (let n = 1; n <= 2; n++) {
-            const next = posts[idx + n];
-            if (next) {
-              if (next.postLink1) fetchVideoUrl(next.postLink1, `video-${idx + n}-1`);
-              if (next.postLink2) fetchVideoUrl(next.postLink2, `video-${idx + n}-2`);
-            }
-          }
-
-          entry.target.querySelectorAll('video').forEach(v => {
-            v.muted = true;
-            v.play().catch(() => {});
-          });
-        } else {
-          entry.target.querySelectorAll('video').forEach(v => {
-            v.pause();
-            v.currentTime = 0;
-          });
         }
       });
     }, { root: carousel, threshold: 0.6 });
 
-    document.querySelectorAll('.card').forEach((card) => observer.observe(card));
+    document.querySelectorAll('.card').forEach(card => observer.observe(card));
   }
 
-  async function toggleApprove(index) {
+  async function toggleApprove(index, linkNum) {
     const post = posts[index];
-    const newVal = !post.approved;
-    const btn = document.querySelector(`[data-btn="${index}"]`);
-    const dot = document.querySelectorAll('.dot')[index];
+    const key = linkNum === 1 ? 'approved1' : 'approved2';
+    const newVal = !post[key];
+    const btn = document.querySelector(`[data-btn="${index}-${linkNum}"]`);
 
     btn.disabled = true;
     btn.textContent = 'Saving...';
 
     try {
+      const body = {};
+      body[key] = newVal;
       const res = await fetch(`/api/approve/${post.id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ approved: newVal }),
+        body: JSON.stringify(body),
       });
-
       if (!res.ok) throw new Error('Failed');
 
-      post.approved = newVal;
+      post[key] = newVal;
       btn.className = `approve-btn ${newVal ? 'approved' : 'unapproved'}`;
       btn.textContent = newVal ? 'Approved ✓' : 'Approve';
-      dot.classList.toggle('is-approved', newVal);
-    } catch (err) {
+
+      const dot = document.querySelectorAll('.dot')[index];
+      dot.classList.toggle('is-approved', post.approved1 || post.approved2);
+    } catch {
       btn.textContent = 'Error — tap to retry';
     }
-
     btn.disabled = false;
   }
 

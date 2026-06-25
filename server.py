@@ -1,6 +1,4 @@
 import os
-import subprocess
-import json
 from dotenv import load_dotenv
 from flask import Flask, send_file, jsonify, request
 import httpx
@@ -16,30 +14,6 @@ HEADERS = {
     "Notion-Version": "2022-06-28",
     "Content-Type": "application/json",
 }
-
-video_cache = {}
-
-
-def extract_video_url(ig_url):
-    if not ig_url:
-        return None
-    if ig_url in video_cache:
-        return video_cache[ig_url]
-    try:
-        clean = ig_url.split("?")[0]
-        result = subprocess.run(
-            ["python3", "-m", "yt_dlp", "--dump-json", "--no-download", clean],
-            capture_output=True, text=True, timeout=30,
-        )
-        if result.returncode == 0:
-            data = json.loads(result.stdout)
-            url = data.get("url")
-            if url:
-                video_cache[ig_url] = url
-                return url
-    except Exception:
-        pass
-    return None
 
 
 @app.route("/")
@@ -82,6 +56,9 @@ def get_posts():
         link1 = props.get("Post link 1", {}).get("url")
         link2 = props.get("Post link 2", {}).get("url")
 
+        approved1 = props.get("Approve link 1", {}).get("checkbox", False)
+        approved2 = props.get("Approve link 2", {}).get("checkbox", False)
+
         posts.append({
             "id": page["id"],
             "instagram": instagram,
@@ -89,28 +66,25 @@ def get_posts():
             "songName": song,
             "postLink1": link1,
             "postLink2": link2,
-            "approved": props.get("Approve", {}).get("checkbox", False),
+            "approved1": approved1,
+            "approved2": approved2,
         })
 
     return jsonify(posts)
 
 
-@app.route("/api/video")
-def get_video():
-    ig_url = request.args.get("url")
-    if not ig_url:
-        return jsonify({"error": "Missing url param"}), 400
-    video_url = extract_video_url(ig_url)
-    return jsonify({"videoUrl": video_url})
-
-
 @app.route("/api/approve/<page_id>", methods=["POST"])
 def approve(page_id):
     body = request.get_json()
+    props = {}
+    if "approved1" in body:
+        props["Approve link 1"] = {"checkbox": body["approved1"]}
+    if "approved2" in body:
+        props["Approve link 2"] = {"checkbox": body["approved2"]}
     resp = httpx.patch(
         f"{NOTION_BASE}/pages/{page_id}",
         headers=HEADERS,
-        json={"properties": {"Approve": {"checkbox": body["approved"]}}},
+        json={"properties": props},
         timeout=30,
     )
     resp.raise_for_status()
